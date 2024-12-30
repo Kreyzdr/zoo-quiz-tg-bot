@@ -2,7 +2,7 @@
 animals= {
     "Asia": {
         "Water": {},
-        "Air": {},
+        "Air": "орёл нахуй",
         "Land": {}
     },
 

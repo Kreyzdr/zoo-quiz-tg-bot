@@ -26,40 +26,67 @@ def initial_message(massege):
     bot.send_message(massege.chat.id, "В данной викторине, от Московского зоопарка, вам предстоит пройти опрос \n"
                 "какое у вас тотемное животное. И вы даже сможете взять его в опеку! Интересно? Тогда нажми /values?")
 
+user_states = {}
 
 @bot.message_handler(commands=["values"])
-def first_question(masseng):
+def start_questions(massage):
+    user_states[massage.chat.id] = {"current_question": 0, "answers": []}
+    ask_question(massage.chat.id)
 
-    for i in range(0, len(questions)):
-        initial_keyboard = types.InlineKeyboardMarkup()
-        quest = list(questions)[i]
-        for answer in questions[quest]:
-            button = types.InlineKeyboardButton(answer)
-            initial_keyboard.add(button)
-        bot.send_message(masseng.chat.id, text= str(quest), reply_markup= initial_keyboard)
+def ask_question(chat_id):
+    state = user_states[chat_id]
+    question_keys = list(questions.keys())
+
+    if state["current_question"] < len(question_keys):
+        question = question_keys[state["current_question"]]
+        options = questions[question]
+
+        list_botton = types.InlineKeyboardMarkup(row_width=3)
+        row = []
+
+        for option in options:
+            botton= types.InlineKeyboardButton(option, callback_data= option)
+            row.append(botton)
+
+            if len(row) == 3:
+                list_botton.add(*row)
+                row = []
+        if row:
+            list_botton.add(*row)
+
+        bot.send_message(chat_id, question, reply_markup= list_botton)
+    else:
+        show_animal(chat_id)
 
 
-
-@bot.callback_query_handler()
+@bot.callback_query_handler(func=lambda call: True)
 def handle_query(call):
-    global massege_id
+    chat_id = call.message.chat.id
+    user_state = user_states[chat_id]
 
-    bot.delete_message(call.message.chat.id, massege_id)
-    region = call.data
-    result = animals[region]
-    bot.send_message(call.message.chat.id,  "/продолжить")
+    # Сохраняем ответ
+    user_state["answers"].append(call.data)
+
+    # Переходим к следующему вопросу
+    user_state["current_question"] += 1
+    ask_question(chat_id)
 
 
-@bot.message_handler()
-def second(masseng):
-    global massege_id
-    initial_keyboard = types.InlineKeyboardMarkup()
-    button1 = types.InlineKeyboardButton("Вода", callback_data="Water")
-    button2 = types.InlineKeyboardButton("Воздух", callback_data="Air")
-    button3 = types.InlineKeyboardButton("Земля", callback_data="Land")
-    initial_keyboard.add(button1, button2, button3)
-    sent_message = bot.send_message(masseng.chat.id, "Какая твоя стихия?", reply_markup= initial_keyboard)
-    massege_id = sent_message.message_id
+def show_animal(chat_id):
+    user_state = user_states[chat_id]
+    animal_results = set()
+
+    for answer in user_state["answers"]:
+        if answer in animals:
+            animal_results.add(animals[answer])
+
+    animal_message = "Ваши тотемные животные: " + ", ".join(animal_results)
+    bot.send_message(chat_id, animal_message)
+
+    # Убираем состояние пользователя
+    del user_states[chat_id]
+
+
 
 bot.polling(non_stop=True)
 
