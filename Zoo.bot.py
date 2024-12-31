@@ -4,15 +4,19 @@ from telebot import types
 from sekret.key import TOKEN
 from animals_and_their_characteristics import animals
 from questions import questions
+
 bot = telebot.TeleBot(TOKEN)
 
-massege_id = None
+last_message_id = None
+
+user_states = {}
 
 
 commands = {
     "start": "Начать диолог",
     "help": "Помощь"
 }
+
 
 @bot.message_handler(commands=["help", 'start'])
 def initial_message(massege):
@@ -26,7 +30,6 @@ def initial_message(massege):
     bot.send_message(massege.chat.id, "В данной викторине, от Московского зоопарка, вам предстоит пройти опрос \n"
                 "какое у вас тотемное животное. И вы даже сможете взять его в опеку! Интересно? Тогда нажми /values?")
 
-user_states = {}
 
 @bot.message_handler(commands=["values"])
 def start_questions(massage):
@@ -54,11 +57,14 @@ def ask_question(chat_id):
         if row:
             list_botton.add(*row)
 
-        bot.send_message(chat_id, question, reply_markup= list_botton)
+        last_mess = bot.send_message(chat_id, question, reply_markup= list_botton)
+
+        last_message_id = last_mess.message_id
+
     else:
         show_animal(chat_id)
 
-
+print(last_message_id)
 @bot.callback_query_handler(func=lambda call: True)
 def handle_query(call):
     chat_id = call.message.chat.id
@@ -67,25 +73,27 @@ def handle_query(call):
     # Сохраняем ответ
     user_state["answers"].append(call.data)
 
+    bot.delete_message(call.message.chat.id, last_message_id)
+
     # Переходим к следующему вопросу
     user_state["current_question"] += 1
     ask_question(chat_id)
 
 
+
 def show_animal(chat_id):
     user_state = user_states[chat_id]
-    animal_results = set()
-
-    for answer in user_state["answers"]:
-        if answer in animals:
-            animal_results.add(animals[answer])
-
-    animal_message = "Ваши тотемные животные: " + ", ".join(animal_results)
-    bot.send_message(chat_id, animal_message)
-
-    # Убираем состояние пользователя
-    del user_states[chat_id]
-
+    do_result = user_state["answers"]
+    n = 0
+    way = None
+    while n < len(do_result):
+        if n == 0:
+            way = animals[do_result[n]]
+            n += 1
+        else:
+            way = way[do_result[n]]
+            n += 1
+    bot.send_message(chat_id, way)
 
 
 bot.polling(non_stop=True)
