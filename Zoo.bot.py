@@ -58,21 +58,24 @@ def ask_question(chat_id):
         question = question_keys[state["current_question"]]
         options = questions[question]
 
+        # создаём кнопки, с условием что по 3 кнопки в ряд
         list_botton = types.InlineKeyboardMarkup(row_width=3)
-        row = []
+        row = [] # лист с кнопками
 
         for option in options:
-            botton= types.InlineKeyboardButton(option, callback_data= option)
+            # каждый вариант с ответами, и их вес добавляем, и добавляем в лист (row)
+            botton= types.InlineKeyboardButton(option, callback_data= options[option])
             row.append(botton)
 
-            if len(row) == 3:
+            if len(row) == 3: # если длина уже подходит под длину клав., то добавляем их
                 list_botton.add(*row)
                 row = []
-        if row:
+
+        if row: # если остались в листе есть ещё варианты ответа, то добавляем их
             list_botton.add(*row)
 
-        last_mess = bot.send_message(chat_id, question, reply_markup= list_botton)
-        last_message_id = last_mess.message_id
+        last_mess = bot.send_message(chat_id, question, reply_markup= list_botton) # печатаем вопрос и клав., для ответов
+        last_message_id = last_mess.message_id # добавляем id сообщения
     else:
         show_animal(chat_id)
 
@@ -102,24 +105,19 @@ def dell_messages(chat_id, last_message_id):
     Удаляем передувшее сообщение
     """
     bot.delete_message(chat_id, last_message_id)
+    # обновляем id
     last_message_id = None
 
 
 
 def show_animal(chat_id):
-    """Результаты"""
+    """
+    Результаты
+    ОСТАЛОСЬ В ЗАВИСИМОСТИ ОТ ТОГО КАК Я РЕАЛИЗУЮ БИБЛИОТЕКУ ПО ЖИВОТНЫМ ДОПИСАТЬ КОД
+    """
     user_state = user_states[chat_id]
-    do_result = user_state["answers"]
-    n = 0
-    way = None
-    while n < len(do_result):
-        if n == 0:
-            way = animals[do_result[n]]
-            n += 1
-        else:
-            way = way[do_result[n]]
-            n += 1
-    bot.send_message(chat_id, way)
+    do_result = list(map(lambda x: int(x), user_state["answers"]))
+    result = sum(do_result)
 
 
 bot.polling(non_stop=True)
