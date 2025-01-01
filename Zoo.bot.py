@@ -43,10 +43,14 @@ def start_questions(massage):
     user_states[massage.chat.id] = {"current_question": 0, "answers": []}
     ask_question(massage.chat.id)
 
+
+
 def ask_question(chat_id):
     """Основная функция.
     Задаюм вопросы
     """
+    global last_message_id
+
     state = user_states[chat_id]
     question_keys = list(questions.keys())
 
@@ -68,9 +72,7 @@ def ask_question(chat_id):
             list_botton.add(*row)
 
         last_mess = bot.send_message(chat_id, question, reply_markup= list_botton)
-
         last_message_id = last_mess.message_id
-
     else:
         show_animal(chat_id)
 
@@ -86,7 +88,21 @@ def handle_query(call):
 
     # Переходим к следующему вопросу
     user_state["current_question"] += 1
+
+    # Если есть id сообщения то удаляем
+    if last_message_id is not None:
+        dell_messages(chat_id, last_message_id)
+
     ask_question(chat_id)
+
+
+
+def dell_messages(chat_id, last_message_id):
+    """
+    Удаляем передувшее сообщение
+    """
+    bot.delete_message(chat_id, last_message_id)
+    last_message_id = None
 
 
 
