@@ -59,7 +59,7 @@ def ask_question(chat_id):
         options = questions[question]
 
         # создаём кнопки, с условием что по 3 кнопки в ряд
-        list_botton = types.InlineKeyboardMarkup(row_width=3)
+        list_botton = types.InlineKeyboardMarkup(row_width=2)
         row = [] # лист с кнопками
 
         for option in options:
@@ -67,7 +67,7 @@ def ask_question(chat_id):
             botton= types.InlineKeyboardButton(option, callback_data= options[option])
             row.append(botton)
 
-            if len(row) == 3: # если длина уже подходит под длину клав., то добавляем их
+            if len(row) == 2: # если длина уже подходит под длину клав., то добавляем их
                 list_botton.add(*row)
                 row = []
 
@@ -113,11 +113,13 @@ def dell_messages(chat_id, last_message_id):
 def show_animal(chat_id):
     """
     Результаты
-    ОСТАЛОСЬ В ЗАВИСИМОСТИ ОТ ТОГО КАК Я РЕАЛИЗУЮ БИБЛИОТЕКУ ПО ЖИВОТНЫМ ДОПИСАТЬ КОД
+    ОСТАЛОСЬ ДОРОБОТАТЬ ЧТОБЫ С ЕГО НАЗВАНИЕМ ВЫХОДИЛО ОПИСАНИЕ И ФОТО
     """
     user_state = user_states[chat_id]
     do_result = list(map(lambda x: int(x), user_state["answers"]))
     result = sum(do_result)
+
+    bot.send_message(chat_id, animals[result])
 
 
 bot.polling(non_stop=True)
