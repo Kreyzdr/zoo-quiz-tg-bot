@@ -4,6 +4,7 @@ from telebot import types
 from sekret.key import TOKEN # импортируем токен
 from animals_and_their_characteristics import animals # импортируем данные (я бы назвал дерево), о животных
 from questions import questions # импортируем вопросы
+from photo_generation import get_animal_name
 
 bot = telebot.TeleBot(TOKEN)
 
@@ -113,14 +114,13 @@ def dell_messages(chat_id, last_message_id):
 def show_animal(chat_id):
     """
     Результаты
-    ОСТАЛОСЬ ДОРОБОТАТЬ ЧТОБЫ С ЕГО НАЗВАНИЕМ ВЫХОДИЛО ОПИСАНИЕ И ФОТО
+    отправляет сообщение с фото животного
     """
     user_state = user_states[chat_id]
     do_result = list(map(lambda x: int(x), user_state["answers"]))
     result = sum(do_result)
 
-    bot.send_message(chat_id, animals[result])
-
+    bot.send_photo(chat_id, photo=get_animal_name(animals[result]), caption=f"Ваше тотемное животное: {animals[result]}")
 
 bot.polling(non_stop=True)
 
