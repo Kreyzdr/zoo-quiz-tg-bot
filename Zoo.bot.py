@@ -80,6 +80,8 @@ def ask_question(chat_id):
     else:
         show_animal(chat_id)
 
+
+
 @bot.callback_query_handler(func=lambda call: True)
 def handle_query(call):
     """Делаем так чтобы вопросы по очереди задавались"""
@@ -88,7 +90,6 @@ def handle_query(call):
 
     # Сохраняем ответ
     user_state["answers"].append(call.data)
-
 
     # Переходим к следующему вопросу
     user_state["current_question"] += 1
@@ -118,9 +119,28 @@ def show_animal(chat_id):
     """
     user_state = user_states[chat_id]
     do_result = list(map(lambda x: int(x), user_state["answers"]))
-    result = sum(do_result)
 
-    bot.send_photo(chat_id, photo=get_animal_name(animals[result]), caption=f"Ваше тотемное животное: {animals[result]}")
+    result = sum(do_result)
+    animal = animals[result]
+
+    bot.send_message(chat_id, "Ииии подводя итоги, ваше тотемное животное:")
+    bot.send_photo(chat_id, photo=get_animal_name(f"{animal.split(':')[0]}"), caption=f"{animal}")
+
+
+
+@bot.message_handler(commands=["test"])
+def test(messeng):
+    """
+    Проверка итогово результата.
+    Сделал времена дабы не проходить весь тест занова,
+    поэтому когда буду уверен, что система работает так как я хочу, уберу.
+    """
+    result = 46  # номер животного которое хочу проверить (от 1 до 260)
+    animal = animals[result]
+
+    bot.send_message(messeng.chat.id, "Ииии подводя итоги, ваше тотемное животное:")
+    bot.send_photo(messeng.chat.id, photo=get_animal_name(f"{animal.split(':')[0]}"),caption=f"{animal}")
+
+
 
 bot.polling(non_stop=True)
-
