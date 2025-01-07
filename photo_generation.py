@@ -15,19 +15,9 @@ from sekret.key import API
 def get_animal_name(animal):
     API_KEY = API
 
-    url = f'https://api.unsplash.com/search/photos'
+    url = f'https://api.unsplash.com/search/photos?query={animal}&client_id={API_KEY}'
 
-    headers = {
-        'Authorization': f'Client-ID {API_KEY}' # указываем мой API ключ
-    }
-
-    params = {
-        'query': animal, # что мы ищем (в нашем случае, животное)
-        'page': 1, # страница
-        'per_page': 1 # количество фот
-    }
-    # получаем фото
-    response = requests.get(url, headers= headers, params=params)
+    response = requests.get(url)
 
     #  оформляем результат
     photos = response.json().get('results', [])

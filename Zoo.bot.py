@@ -127,6 +127,13 @@ def show_animal(chat_id):
     bot.send_photo(chat_id, photo=get_animal_name(f"{animal.split(':')[0]}"), caption=f"{animal}")
 
 
+def share_result():
+    """Поделиться результатом
+        пока ничего и смысл так такого нет.
+        Так как сам телеграм позволяет удобно поделиться куда угодно кому удобно
+        Но я всё равно сделаю, но в конце, так как это второсотное.
+        А добавил её чтобы не забыть."""
+    pass
 
 @bot.message_handler(commands=["test"])
 def test(messeng):
@@ -135,12 +142,13 @@ def test(messeng):
     Сделал времена дабы не проходить весь тест занова,
     поэтому когда буду уверен, что система работает так как я хочу, уберу.
     """
-    result = 46  # номер животного которое хочу проверить (от 1 до 260)
+    result = 138     # номер животного которое хочу проверить (от 1 до 260)
     animal = animals[result]
-
-    bot.send_message(messeng.chat.id, "Ииии подводя итоги, ваше тотемное животное:")
-    bot.send_photo(messeng.chat.id, photo=get_animal_name(f"{animal.split(':')[0]}"),caption=f"{animal}")
-
+    try:
+        bot.send_message(messeng.chat.id, "Ииии подводя итоги, ваше тотемное животное:")
+        bot.send_photo(messeng.chat.id, photo=get_animal_name(f"{animal.split(':')[0]}"),caption=f"{animal}")
+    except:
+        print(animal)
 
 
 bot.polling(non_stop=True)
