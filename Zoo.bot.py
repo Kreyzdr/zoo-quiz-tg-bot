@@ -5,6 +5,8 @@ from sekret.key import TOKEN # импортируем токен
 from animals_and_their_characteristics import animals # импортируем данные (я бы назвал дерево), о животных
 from questions import questions # импортируем вопросы
 from photo_generation import get_animal_name
+from telegram_bot.check import check_emil
+from smtp import send_mail
 
 bot = telebot.TeleBot(TOKEN)
 
@@ -59,7 +61,7 @@ def ask_question(chat_id):
         question = question_keys[state["current_question"]]
         options = questions[question]
 
-        # создаём кнопки, с условием что по 3 кнопки в ряд
+        # создаём кнопки, с условием, что по 3 кнопки в ряд
         list_botton = types.InlineKeyboardMarkup(row_width=2)
         row = [] # лист с кнопками
 
@@ -84,21 +86,61 @@ def ask_question(chat_id):
 
 @bot.callback_query_handler(func=lambda call: True)
 def handle_query(call):
-    """Делаем так чтобы вопросы по очереди задавались"""
+    """Делаем так, чтобы вопросы по очереди задавались и имели возвожность отправить сообщение"""
+
     chat_id = call.message.chat.id
-    user_state = user_states[chat_id]
 
-    # Сохраняем ответ
-    user_state["answers"].append(call.data)
+    if call.data == "EMAIL":
+        user_states["step"] = 0
+        bot.send_message(chat_id, "Сначала введи свою почту: ")
+        while True:
 
-    # Переходим к следующему вопросу
-    user_state["current_question"] += 1
+            if user_states["step"]==0:
+                @bot.message_handler(content_types=["text"])
+                def EMIL_TEXT(message):
 
-    # Если есть id сообщения то удаляем
-    if last_message_id is not None:
-        dell_messages(chat_id, last_message_id)
+                    EMAIL = message.text
+                    if check_emil(EMAIL):
+                        user_states["eml"] = EMAIL
+                        user_states["step"] += 1
+                        bot.send_message(chat_id, "Теперь ведите то что хотите спросить: ")
+                    else:
+                        bot.send_message(chat_id, "Вы вели не правильную почту.")
 
-    ask_question(chat_id)
+            if user_states["step"] == 1:
+                @bot.message_handler(content_types=["text"])
+                def EMIL_TEXT(message):
+
+                    TEXTS = message.text
+                    user_states["text"] = TEXTS
+                    user_states["step"] += 1
+
+
+            if user_states["step"] == 2:
+                try:
+                    send_mail(msg=user_states["text"], to=user_states["eml"])
+                except:
+                    bot.send_message(chat_id, "Произошол сбой на сервере")
+                    break
+                else:
+                    bot.send_message(chat_id, "Сообщение успешно отправлено, ждите ответ на свою почту!!")
+                    user_states["step"] += 1
+                    break
+
+    else:
+        user_state = user_states[chat_id]
+
+        # Сохраняем ответ
+        user_state["answers"].append(call.data)
+
+        # Переходим к следующему вопросу
+        user_state["current_question"] += 1
+
+        # Если есть id сообщения то удаляем
+        if last_message_id is not None:
+            dell_messages(chat_id, last_message_id)
+
+        ask_question(chat_id)
 
 
 
@@ -123,8 +165,13 @@ def show_animal(chat_id):
     result = sum(do_result)
     animal = animals[result]
 
+    list_botton = types.InlineKeyboardMarkup()
+    botton = types.InlineKeyboardButton("Написать зоопарку ", callback_data="EMAIL")
+    list_botton.add(botton)
+
     bot.send_message(chat_id, "Ииии подводя итоги, ваше тотемное животное:")
-    bot.send_photo(chat_id, photo=get_animal_name(f"{animal.split(':')[0]}"), caption=f"{animal}")
+    bot.send_photo(chat_id, photo=get_animal_name(f"{animal.split(':')[0]}"), caption=f"{animal}",
+                   reply_markup=list_botton)
 
 
 def share_result():
@@ -135,6 +182,7 @@ def share_result():
         А добавил её чтобы не забыть."""
     pass
 
+
 @bot.message_handler(commands=["test"])
 def test(messeng):
     """
@@ -144,11 +192,13 @@ def test(messeng):
     """
     result = 138     # номер животного которое хочу проверить (от 1 до 260)
     animal = animals[result]
-    try:
-        bot.send_message(messeng.chat.id, "Ииии подводя итоги, ваше тотемное животное:")
-        bot.send_photo(messeng.chat.id, photo=get_animal_name(f"{animal.split(':')[0]}"),caption=f"{animal}")
-    except:
-        print(animal)
+    list_botton = types.InlineKeyboardMarkup()
+    botton = types.InlineKeyboardButton("Написать зоопарку ", callback_data="EMAIL")
+    list_botton.add(botton)
+
+    bot.send_message(messeng.chat.id, "Ииии подводя итоги, ваше тотемное животное:")
+    bot.send_photo(messeng.chat.id, photo=get_animal_name(f"{animal.split(':')[0]}"), caption=f"{animal}",
+                   reply_markup=list_botton)
 
 
 bot.polling(non_stop=True)
