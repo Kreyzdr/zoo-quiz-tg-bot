@@ -1,3 +1,7 @@
+"""
+Проверка
+"""
+
 def check_emil(value):
     if " "  in value:
         return False

@@ -11,7 +11,6 @@ import requests
 from sekret.key import API
 
 
-
 def get_animal_name(animal):
     API_KEY = API
 
